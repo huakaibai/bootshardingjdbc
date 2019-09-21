@@ -1,0 +1,52 @@
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+  shardingsphere:
+    datasource:
+      names: master,slave
+      master:
+        driver-class-name: com.mysql.jdbc.Driver
+        password: 123456
+        type: com.alibaba.druid.pool.DruidDataSource
+        url: jdbc:mysql://127.0.0.1:3340/test?characterEncoding=utf-8
+        username: root
+      slave:
+        driver-class-name: com.mysql.jdbc.Driver
+        password: 123456
+        type: com.alibaba.druid.pool.DruidDataSource
+        url: jdbc:mysql://localhost:3341/test?characterEncoding=utf-8
+        username: root
+    props:
+      sql:
+        show: true
+    sharding:
+      master-slave-rules:
+        ds0:
+          master-data-source-name: master
+          slave-data-source-names: slave
+      binding-tables: t_order,t_user
+      #broadcast-tables: t_config
+      tables:
+        t_order:
+          key-generator:
+            column: order_id
+            type: SNOWFLAKE
+          actual-data-nodes: ds0.t_order_$->{0..1}
+          table-strategy:
+            inline:
+              sharding-column: user_id
+              algorithm-expression: t_order_$->{user_id % 2}
+        t_user:
+          key-generator:
+            column: user_id
+            type: SNOWFLAKE
+          actual-data-nodes: ds0.t_user_$->{0..1}
+          table-strategy:
+              inline:
+                sharding-column: user_id
+                algorithm-expression: t_user_$->{user_id % 2}
+
+
